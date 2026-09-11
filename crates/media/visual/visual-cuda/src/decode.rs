@@ -296,13 +296,15 @@ fn usable_cached_frame(
 }
 
 fn stabilized_frame(
-    mut frame: DecodedVisual,
+    frame: DecodedVisual,
     item: &VideoItem,
     state: crate::layer::VisualState,
 ) -> VisualRender {
     let (source_position, mut frame_data) = frame;
     if !frame_data.is_gpu() {
-        frame_data = frame_data.copy_to(shrimply_visual_frame::Device::Cuda(0)).unwrap_or(frame_data);
+        frame_data = frame_data
+            .copy_to(shrimply_visual_frame::Device::Cuda(0))
+            .unwrap_or(frame_data);
     }
     let mut visual =
         crate::layer::RasterVisual::materialized(crate::layer::GpuFrame::Nv12(frame_data), state);
