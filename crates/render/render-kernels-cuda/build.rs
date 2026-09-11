@@ -15,7 +15,7 @@ const MODULES: &str = include_str!("../render-core/shaders/kernels.txt");
 fn main() {
     if std::env::var("SHRIMPLY_MOCK_CUDA").unwrap_or_default() == "1" {
         let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-        std::fs::write(out_dir.join("image.cubin"), &[]).unwrap();
+        std::fs::write(out_dir.join("image.cubin"), []).unwrap();
         return;
     }
 }
@@ -24,7 +24,7 @@ fn main() {
 fn main() {
     if std::env::var("SHRIMPLY_MOCK_CUDA").unwrap_or_default() == "1" {
         let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-        std::fs::write(out_dir.join("image.cubin"), &[]).unwrap();
+        std::fs::write(out_dir.join("image.cubin"), []).unwrap();
         return;
     }
 
