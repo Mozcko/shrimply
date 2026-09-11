@@ -1,4 +1,5 @@
 #ifdef SHRIMPLY_MOCK_CUDA
+#include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>
 typedef int CUresult;
@@ -35,14 +36,14 @@ CUresult shrimply_cuda_module_load(void **module, const void *image) { return 0;
 CUresult shrimply_cuda_module_unload(void *module) { return 0; }
 CUresult shrimply_cuda_module_function(void **function, void *module, const char *name) { return 0; }
 CUresult shrimply_cuda_launch(void *function, unsigned gx, unsigned gy, unsigned gz, unsigned bx, unsigned by, unsigned bz, unsigned shared_bytes, void *stream, void **parameters) { return 0; }
-CUresult shrimply_cuda_mem_alloc(uint64_t *pointer, size_t bytes) { return 0; }
-CUresult shrimply_cuda_mem_free(uint64_t pointer) { return 0; }
+CUresult shrimply_cuda_mem_alloc(uint64_t *pointer, size_t bytes) { *pointer = (uint64_t)malloc(bytes); return 0; }
+CUresult shrimply_cuda_mem_free(uint64_t pointer) { free((void*)pointer); return 0; }
 CUresult shrimply_cuda_memcpy_htod_async(uint64_t destination, const void *source, size_t bytes, void *stream) { return 0; }
 CUresult shrimply_cuda_memcpy_htod(uint64_t destination, const void *source, size_t bytes) { return 0; }
 CUresult shrimply_cuda_memcpy_dtoh_async(void *destination, uint64_t source, size_t bytes, void *stream) { return 0; }
 CUresult shrimply_cuda_memcpy_dtod_async(uint64_t destination, uint64_t source, size_t bytes, void *stream) { return 0; }
 CUresult shrimply_cuda_memset_async(uint64_t destination, unsigned char value, size_t bytes, void *stream) { return 0; }
-CUresult shrimply_cuda_mem_alloc_managed(uint64_t *pointer, size_t bytes, unsigned flags) { return 0; }
+CUresult shrimply_cuda_mem_alloc_managed(uint64_t *pointer, size_t bytes, unsigned flags) { *pointer = (uint64_t)malloc(bytes); return 0; }
 CUresult shrimply_cuda_mem_get_info(size_t *free_bytes, size_t *total_bytes) { return 0; }
 CUresult shrimply_cuda_memcpy_2d(const void *descriptor) { return 0; }
 CUresult shrimply_cuda_memcpy_2d_async(const void *descriptor, void *stream) { return 0; }
