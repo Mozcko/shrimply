@@ -25,11 +25,56 @@ impl TryFrom<&ffmpeg_next::frame::Video> for VisualFrame {
 
     fn try_from(decoded: &ffmpeg_next::frame::Video) -> Result<Self, Self::Error> {
         let raw = unsafe { &*decoded.as_ptr() };
-        if raw.format != sys::AVPixelFormat::AV_PIX_FMT_CUDA as i32 {
-            return Err(format!(
-                "NVIDIA decoder returned non-CUDA frame format {}; refusing CPU transfer",
-                raw.format,
-            ));
+if raw.format != sys::AVPixelFormat::AV_PIX_FMT_CUDA as i32 {
+            let av_format: sys::AVPixelFormat = unsafe { std::mem::transmute(raw.format) };
+            if av_format == sys::AVPixelFormat::AV_PIX_FMT_YUV420P {
+                let width = raw.width.max(0) as u32;
+                let height = raw.height.max(0) as u32;
+                let mut y_plane = Vec::with_capacity((width * height) as usize);
+                let y_linesize = raw.linesize[0].max(0) as usize;
+                let y_data = raw.data[0];
+                for row in 0..height {
+                    let src = unsafe { std::slice::from_raw_parts(y_data.add(row as usize * y_linesize), width as usize) };
+                    y_plane.extend_from_slice(src);
+                }
+                
+                let uv_width = width / 2;
+                let uv_height = height / 2;
+                let mut uv_plane = Vec::with_capacity((width * uv_height) as usize);
+                let u_linesize = raw.linesize[1].max(0) as usize;
+                let v_linesize = raw.linesize[2].max(0) as usize;
+                let u_data = raw.data[1];
+                let v_data = raw.data[2];
+                for row in 0..uv_height {
+                    let u_src = unsafe { std::slice::from_raw_parts(u_data.add(row as usize * u_linesize), uv_width as usize) };
+                    let v_src = unsafe { std::slice::from_raw_parts(v_data.add(row as usize * v_linesize), uv_width as usize) };
+                    for i in 0..uv_width as usize {
+                        uv_plane.push(u_src[i]);
+                        uv_plane.push(v_src[i]);
+                    }
+                }
+                return Self::from_cpu_planes(VisualFormat::Nv12, width, height, vec![y_plane, uv_plane]);
+            }
+
+            let format = visual_format(av_format)?;
+            let width = raw.width.max(0) as u32;
+            let height = raw.height.max(0) as u32;
+            let (row_bytes, heights) = cuda_plane_layout(av_format, width, height)?;
+            let mut cpu_planes = Vec::with_capacity(2);
+            for index in 0..2 {
+                let linesize = raw.linesize[index].max(0) as usize;
+                let data = raw.data[index];
+                if data.is_null() {
+                    return Err(format!("plane {} is null", index));
+                }
+                let mut plane_bytes = Vec::with_capacity(row_bytes[index] * heights[index]);
+                for row in 0..heights[index] {
+                    let src = unsafe { std::slice::from_raw_parts(data.add(row * linesize), row_bytes[index]) };
+                    plane_bytes.extend_from_slice(src);
+                }
+                cpu_planes.push(plane_bytes);
+            }
+            return Self::from_cpu_planes(format, width, height, cpu_planes);
         }
         let frames_context = unsafe { cuda_frames_context(raw)? };
         let cuda = unsafe { cuda_context((*frames_context).device_ref) }?;

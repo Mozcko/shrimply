@@ -121,7 +121,17 @@ impl VideoDecoderSession {
         };
 
         let decoder_open_started = Instant::now();
-        let opened = open_nvidia_decoder(&parameters)?;
+        let opened = match open_nvidia_decoder(&parameters) {
+            Ok(opened) => opened,
+            Err(nvidia_error) => {
+                tracing::warn!(
+                    "could not open NVIDIA decoder, falling back to software: {}",
+                    nvidia_error
+                );
+                open_software_decoder(&parameters)?
+            }
+        };
+
         Ok(Self {
             source: source.clone(),
             input,
@@ -705,14 +715,29 @@ enum ReceiveState {
     EndOfStream,
 }
 
-struct OpenedNvidiaDecoder {
+struct OpenedDecoder {
     decoder: ffmpeg::decoder::Video,
     decoder_name: String,
 }
 
-fn open_nvidia_decoder(
-    parameters: &ffmpeg::codec::Parameters,
-) -> Result<OpenedNvidiaDecoder, String> {
+fn open_software_decoder(parameters: &ffmpeg::codec::Parameters) -> Result<OpenedDecoder, String> {
+    let context = ffmpeg::codec::context::Context::from_parameters(parameters.clone())
+        .map_err(|error| error.to_string())?;
+    let decoder = context
+        .decoder()
+        .video()
+        .map_err(|error| error.to_string())?;
+    let decoder_name = decoder
+        .codec()
+        .map(|c| c.name().to_string())
+        .unwrap_or_else(|| "unknown".to_string());
+    Ok(OpenedDecoder {
+        decoder,
+        decoder_name,
+    })
+}
+
+fn open_nvidia_decoder(parameters: &ffmpeg::codec::Parameters) -> Result<OpenedDecoder, String> {
     let codec_id = parameters.id();
     let mut opaque = ptr::null_mut();
     let codec = loop {
@@ -756,7 +781,7 @@ fn open_nvidia_decoder(
         low_delay = live_flags & sys::AV_CODEC_FLAG_LOW_DELAY as i32 != 0,
         "Using NVIDIA CUDA video decoder {decoder_name}"
     );
-    Ok(OpenedNvidiaDecoder {
+    Ok(OpenedDecoder {
         decoder,
         decoder_name,
     })

@@ -410,6 +410,41 @@ impl VisualFrame {
         })
     }
 
+    pub fn from_cpu_planes(
+        format: VisualFormat,
+        width: u32,
+        height: u32,
+        bytes: Vec<Vec<u8>>,
+    ) -> Result<Self, String> {
+        let layout = plane_layout(format, width, height)?;
+        if bytes.len() != layout.len() {
+            return Err("CPU frame plane count mismatch".to_string());
+        }
+        let mut planes = Vec::with_capacity(layout.len());
+        for (plane_bytes, (width_bytes, height_rows)) in bytes.into_iter().zip(layout) {
+            let expected = width_bytes
+                .checked_mul(height_rows)
+                .ok_or("CPU frame size overflow")?;
+            if plane_bytes.len() < expected {
+                return Err(format!(
+                    "CPU frame plane has {} bytes, expected at least {expected}",
+                    plane_bytes.len()
+                ));
+            }
+            planes.push(CpuPlane {
+                bytes: plane_bytes,
+                width_bytes,
+                height: height_rows,
+            });
+        }
+        Ok(Self {
+            inner: Arc::new(FrameStorage::Cpu(planes)),
+            format,
+            width,
+            height,
+        })
+    }
+
     pub fn from_rgba_bytes(width: u32, height: u32, bytes: Vec<u8>) -> Result<Self, String> {
         let [(width_bytes, height_rows)] = plane_layout(VisualFormat::Rgba8, width, height)?
             .try_into()
