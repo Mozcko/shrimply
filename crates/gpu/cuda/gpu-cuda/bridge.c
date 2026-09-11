@@ -49,6 +49,7 @@ CUresult shrimply_cuda_memcpy_2d_async(const void *descriptor, void *stream) { r
 CUresult shrimply_cuda_pointer_get_attribute(void *data, unsigned attribute, uint64_t pointer) { return 0; }
 CUresult shrimply_cuda_import_external_memory(void **memory, const void *descriptor) { return 0; }
 CUresult shrimply_cuda_external_memory_get_buffer(uint64_t *pointer, void *memory, const void *descriptor) { return 0; }
+CUresult shrimply_cuda_external_memory_get_mipmapped_array(void **array, void *memory, const void *descriptor) { return 0; }
 CUresult shrimply_cuda_destroy_external_memory(void *memory) { return 0; }
 CUresult shrimply_cuda_mipmapped_array_get_level(void **array, void *mipmapped, unsigned level) { return 0; }
 CUresult shrimply_cuda_mipmapped_array_destroy(void *mipmapped) { return 0; }
