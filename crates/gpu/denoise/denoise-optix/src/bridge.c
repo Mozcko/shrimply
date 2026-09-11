@@ -1,3 +1,11 @@
+#ifdef SHRIMPLY_MOCK_CUDA
+#include <stdint.h>
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include <stddef.h>
+int shrimply_optix_denoiser_create(void* context, void* stream, uint32_t width, uint32_t height, void** output, char* error, size_t error_capacity) { return -1; }
+int shrimply_optix_denoiser_invoke(void* denoiser, void* stream, uint64_t beauty, uint64_t refraction, uint64_t albedo, uint64_t normal, char* error, size_t error_capacity) { return -1; }
+int shrimply_optix_denoiser_destroy(void* denoiser, char* error, size_t error_capacity) { return 0; }
+#else
 #include <cuda.h>
 #define OPTIX_ENABLE_SDK_MIXING 1
 #include <optix.h>
@@ -5,6 +13,7 @@
 #include <optix_stubs.h>
 
 #include <stdint.h>
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -230,3 +239,5 @@ int shrimply_optix_denoiser_destroy(
     free(value);
     return failed == 0 ? 0 : -1;
 }
+
+#endif

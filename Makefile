@@ -4,7 +4,13 @@ HOST_OS := $(shell uname -s)
 CARGO ?= $(RUSTUP) run $(RUST_TOOLCHAIN) cargo
 RUSTC ?= $(RUSTUP) run $(RUST_TOOLCHAIN) rustc
 CARGO_TARGET_DIR ?= target
-CUDA_HOME ?= $(CURDIR)/external/mock_cuda
+NVCC_PATH := $(shell command -v nvcc 2> /dev/null)
+ifndef NVCC_PATH
+  export SHRIMPLY_MOCK_CUDA=1
+  CUDA_HOME := $(CURDIR)/external/mock_cuda
+else
+  CUDA_HOME ?= /usr/local/cuda
+endif
 CUDA_TOOLKIT_PATH ?= $(CUDA_HOME)
 CUDA_TARGET ?= sm_86
 CUDA_IMAGE_FORMAT ?= cubin

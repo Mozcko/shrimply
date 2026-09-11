@@ -1,4 +1,4 @@
-#version 330 core
+#version 300 es
 out vec2 v_uv;
 uniform vec2 u_surface_size;
 uniform vec4 u_content_rect;
