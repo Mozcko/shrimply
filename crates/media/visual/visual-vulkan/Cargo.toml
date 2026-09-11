@@ -1,0 +1,11 @@
+[package]
+name = "shrimply-visual-vulkan"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+ash.workspace = true
+shrimply-visual-core.workspace = true
+shrimply-visual-frame.workspace = true
+tracing.workspace = true

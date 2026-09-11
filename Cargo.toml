@@ -119,6 +119,7 @@ members = [
     "crates/ui/components/components-demo-gtk",
     "crates/ui/pointer-lock/pointer-lock-wayland",
     "crates/media/visual/visual-cuda",
+    "crates/media/visual/visual-vulkan",
     "crates/media/visual/visual-core",
     "crates/media/visual/visual-modifiers",
     "crates/media/visual/video/video-recording",
